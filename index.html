@@ -521,6 +521,39 @@
       };
     }
 
+    // DATA DOORGEVEN AAN SQUARESPACE FORMULIER
+    function sendDataToSquarespace(midSavingText, countryName, profileName, annualKm) {
+      if (window.parent && window.parent.document) {
+        setTimeout(() => {
+          const pDoc = window.parent.document;
+          
+          // Zoek de invoervelden in het Squarespace-formulier op basis van hun label-tekst
+          const labels = pDoc.querySelectorAll('.form-wrapper label .title, .form-wrapper .field-list .title');
+          labels.forEach(label => {
+            const labelText = label.textContent.toLowerCase();
+            const formFieldContainer = label.closest('.form-item');
+            if (!formFieldContainer) return;
+            const input = formFieldContainer.querySelector('input[type="text"], textarea');
+            if (!input) return;
+
+            if (labelText.includes('saving') || labelText.includes('besparing')) {
+              input.value = midSavingText;
+              input.dispatchEvent(new Event('input', { bubbles: true }));
+            } else if (labelText.includes('country') || labelText.includes('land')) {
+              input.value = countryName;
+              input.dispatchEvent(new Event('input', { bubbles: true }));
+            } else if (labelText.includes('profile') || labelText.includes('profiel')) {
+              input.value = profileName;
+              input.dispatchEvent(new Event('input', { bubbles: true }));
+            } else if (labelText.includes('km') || labelText.includes('afstand')) {
+              input.value = annualKm + ' km/yr';
+              input.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+          });
+        }, 500);
+      }
+    }
+
     document.getElementById('toStep3').addEventListener('click', ()=>{
       document.getElementById('step2').style.display='none';
       document.getElementById('step3').style.display='block';
@@ -571,10 +604,17 @@
       html += `<tr class="total"><td>Total NIXXEN TCO advantage (average scenario)</td><td class="num pos">${fmtEUR(mid.verschil)}</td></tr>`;
       document.getElementById('breakdownTable').innerHTML = html;
       document.getElementById('reportBox').classList.add('open');
+
+      // VUUR DE DATA-OVERDRACHT UIT
+      sendDataToSquarespace(
+        fmtEUR(vMid),
+        LANDEN[state.land].naam,
+        SCENARIOS[state.scenario].naam,
+        state.km
+      );
     });
   }
   
-  // Initialize
   if(document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initNixxenTCO);
   } else {
