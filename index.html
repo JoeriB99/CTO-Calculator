@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NIXXEN — Calculate your TCO advantage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  .nixxen-tco{
+    --bg:#f5f7f9;
+    --surface:#ffffff;
+    --surface-2:#eef1f4;
+    --border:#dfe4ea;
+    --text:#141a20;
+    --text-muted:#5c6672;
+    --green:#00C896;
+    --green-dim:#00a57d;
+    --green-ink:#00996f;
+    --diesel:#9aa4b0;
+    --radius:14px;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Roboto',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding:40px 24px;
+  }
+  .nixxen-tco *{box-sizing:border-box;}
+  .nixxen-tco .wrap{max-width:960px;margin:0 auto;}
+
+  .nixxen-tco .step1-grid{display:grid;grid-template-columns:0.85fr 1.15fr;gap:34px;}
+  .nixxen-tco .grid-cards.countries{grid-template-columns:1fr;}
+  .nixxen-tco .step2-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start;}
+  @media (max-width:640px){
+    .nixxen-tco .step1-grid,.nixxen-tco .step2-grid{grid-template-columns:1fr;gap:18px;}
+    .nixxen-tco .grid-cards.countries{grid-template-columns:repeat(3,1fr);}
+  }
+
+  .nixxen-tco .progress{display:flex;gap:6px;margin-bottom:26px;}
+  .nixxen-tco .progress-seg{height:3px;flex:1;border-radius:2px;background:var(--border);transition:background .3s;}
+  .nixxen-tco .progress-seg.active{background:var(--green);}
+  .nixxen-tco .progress-seg.done{background:var(--green-dim);}
+
+  .nixxen-tco .card-panel{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:34px 38px;
+    margin-bottom:18px;
+    box-shadow:0 1px 2px rgba(20,26,32,0.04), 0 10px 30px rgba(20,26,32,0.06);
+  }
+  .nixxen-tco .step-label{
+    font-family:'Roboto Mono',monospace;
+    font-size:11px;letter-spacing:0.1em;text-transform:uppercase;
+    color:var(--green-ink);margin-bottom:8px;
+  }
+  .nixxen-tco .step-title{font-family:'Roboto',sans-serif;font-weight:700;font-size:20px;margin:0 0 22px;letter-spacing:-0.01em;}
+
+  .nixxen-tco .grid-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:26px;}
+  .nixxen-tco .grid-cards.scenarios{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));}
+  .nixxen-tco .pick-card{
+    background:var(--surface-2);
+    border:1.5px solid var(--border);
+    border-radius:10px;
+    padding:16px 14px;
+    text-align:left;
+    cursor:pointer;
+    transition:border-color .15s, background .15s, transform .1s;
+    user-select:none;
+  }
+  .nixxen-tco .pick-card:hover{border-color:#3a4450;}
+  .nixxen-tco .pick-card:active{transform:scale(0.99);}
+  .nixxen-tco .pick-card.selected{border-color:var(--green);background:rgba(0,200,150,0.08);}
+  .nixxen-tco .pick-card .code{
+    font-family:'Roboto Mono',monospace;font-weight:700;font-size:11px;letter-spacing:0.08em;
+    color:var(--green-ink);display:block;margin-bottom:8px;
+  }
+  .nixxen-tco .pick-card .lbl{font-size:14px;font-weight:500;color:var(--text);display:block;}
+  .nixxen-tco .pick-card .sub{font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text-muted);margin-top:4px;display:block;}
+
+  .nixxen-tco label.field-label{display:block;font-size:13px;font-weight:500;margin-bottom:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;}
+  .nixxen-tco .field-row{margin-bottom:24px;}
+  .nixxen-tco .field-hint{font-size:12px;color:var(--text-muted);margin-top:8px;}
+
+  .nixxen-tco input[type=range]{
+    width:100%;height:4px;border-radius:2px;background:var(--border);
+    -webkit-appearance:none;appearance:none;margin-top:4px;
+  }
+  .nixxen-tco input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:18px;height:18px;border-radius:50%;
+    background:var(--green);cursor:pointer;border:3px solid var(--bg);
+    box-shadow:0 0 0 1px var(--border);
+  }
+  .nixxen-tco input[type=range]::-moz-range-thumb{
+    width:18px;height:18px;border-radius:50%;
+    background:var(--green);cursor:pointer;border:3px solid var(--bg);
+  }
+  .nixxen-tco .range-value{font-family:'Roboto Mono',monospace;font-weight:700;color:var(--green-ink);font-size:14px;}
+  .nixxen-tco .range-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+  .nixxen-tco .range-top .field-label{margin-bottom:0;}
+
+  .nixxen-tco .toggle-row{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    padding:15px 0;border-bottom:1px solid var(--border);
+  }
+  .nixxen-tco .toggle-row:last-child{border-bottom:none;}
+  .nixxen-tco .toggle-text .t1{font-size:14px;font-weight:500;}
+  .nixxen-tco .toggle-text .t2{font-size:12px;color:var(--text-muted);margin-top:3px;line-height:1.4;}
+  .nixxen-tco .switch{
+    position:relative;width:44px;height:24px;border-radius:14px;background:var(--border);
+    cursor:pointer;flex-shrink:0;transition:background .2s;
+  }
+  .nixxen-tco .switch.on{background:var(--green);}
+  .nixxen-tco .switch .knob{
+    position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;
+    background:#fff;transition:left .2s;
+  }
+  .nixxen-tco .switch.on .knob{left:23px;}
+
+  .nixxen-tco .btn{
+    font-family:'Roboto',sans-serif;font-weight:500;font-size:15px;
+    border:none;border-radius:10px;padding:14px 22px;cursor:pointer;
+    transition:transform .1s, opacity .15s, background .15s;
+  }
+  .nixxen-tco .btn:active{transform:scale(0.98);}
+  .nixxen-tco .btn-primary{background:var(--green);color:#08110d;width:100%;font-weight:700;}
+  .nixxen-tco .btn-primary:hover{background:#12d6a4;}
+  .nixxen-tco .btn-primary:disabled{opacity:.3;cursor:not-allowed;}
+  .nixxen-tco .btn-ghost{background:transparent;color:var(--text-muted);border:1px solid var(--border);}
+  .nixxen-tco .btn-ghost:hover{border-color:#3a4450;color:var(--text);}
+  .nixxen-tco .btn-row{display:flex;gap:10px;margin-top:8px;}
+  .nixxen-tco .btn-row .btn-ghost{flex:0 0 auto;}
+  .nixxen-tco .btn-row .btn-primary{flex:1;}
+
+  .nixxen-tco .advanced-toggle{
+    font-size:13px;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;gap:8px;margin-top:6px;
+  }
+  .nixxen-tco .advanced-toggle:hover{color:var(--text);}
+  .nixxen-tco .advanced-toggle span.arrow{transition:transform .2s;font-size:11px;}
+  .nixxen-tco .advanced-toggle.open span.arrow{transform:rotate(90deg);}
+  .nixxen-tco .advanced-body{display:none;margin-top:18px;padding-top:20px;border-top:1px dashed var(--border);}
+  .nixxen-tco .advanced-body.open{display:block;}
+
+  .nixxen-tco .result-headline{text-align:center;margin:8px 0 28px;}
+  .nixxen-tco .result-headline .eyebrow{font-family:'Roboto Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);}
+  .nixxen-tco .result-headline .big{
+    font-family:'Roboto',sans-serif;font-weight:700;font-size:40px;margin:8px 0;color:var(--green-ink);letter-spacing:-0.02em;
+  }
+  .nixxen-tco .result-headline .sub2{font-size:13px;color:var(--text-muted);}
+
+  .nixxen-tco .gauge-wrap{margin:28px 0 8px;}
+  .nixxen-tco .gauge-track{
+    position:relative;height:14px;border-radius:8px;
+    background:var(--surface-2);border:1px solid var(--border);overflow:hidden;
+  }
+  .nixxen-tco .gauge-fill{
+    position:absolute;top:0;bottom:0;left:0;
+    background:linear-gradient(90deg,var(--green-dim),var(--green));
+    border-radius:8px;
+  }
+  .nixxen-tco .gauge-marker{position:absolute;top:-6px;width:2px;height:26px;background:var(--text);}
+  .nixxen-tco .gauge-labels{display:flex;justify-content:space-between;margin-top:10px;font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text-muted);}
+
+  .nixxen-tco .compare-bars{margin:32px 0;}
+  .nixxen-tco .cbar-row{margin-bottom:18px;}
+  .nixxen-tco .cbar-top{display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-bottom:8px;gap:10px;}
+  .nixxen-tco .cbar-top .name{font-weight:500;display:flex;align-items:center;gap:8px;}
+  .nixxen-tco .cbar-top .val{font-family:'Roboto Mono',monospace;color:var(--text-muted);}
+  .nixxen-tco .cbar-track{height:10px;border-radius:6px;background:var(--surface-2);overflow:hidden;}
+  .nixxen-tco .cbar-fill{height:100%;border-radius:6px;transition:width .5s ease;}
+  .nixxen-tco .cbar-fill.diesel{background:linear-gradient(90deg,#7f8a98,var(--diesel));}
+  .nixxen-tco .cbar-fill.hybride{background:linear-gradient(90deg,var(--green-dim),var(--green));}
+  .nixxen-tco .smart-tag{
+    display:none;background:rgba(0,200,150,0.14);color:var(--green-ink);
+    font-family:'Roboto Mono',monospace;font-size:10px;font-weight:700;letter-spacing:0.06em;
+    text-transform:uppercase;padding:3px 8px;border-radius:20px;
+  }
+
+  .nixxen-tco .report{display:none;margin-top:26px;}
+  .nixxen-tco .report.open{display:block;}
+  .nixxen-tco table.breakdown{width:100%;border-collapse:collapse;font-size:13px;margin-top:12px;}
+  .nixxen-tco table.breakdown th{
+    text-align:left;font-family:'Roboto Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.06em;
+    color:var(--text-muted);font-weight:500;padding:8px 6px;border-bottom:1px solid var(--border);
+  }
+  .nixxen-tco table.breakdown td{padding:10px 6px;border-bottom:1px solid var(--border);}
+  .nixxen-tco table.breakdown td.num{font-family:'Roboto Mono',monospace;text-align:right;white-space:nowrap;}
+  .nixxen-tco table.breakdown tr.total td{font-weight:700;border-top:1.5px solid var(--text-muted);border-bottom:none;}
+  .nixxen-tco .pos{color:var(--green-ink);}
+  .nixxen-tco .neg{color:var(--text-muted);}
+
+  .nixxen-tco .footnote{font-size:11.5px;color:#5b6472;margin-top:30px;line-height:1.6;}
+  .nixxen-tco .btn:focus-visible,
+  .nixxen-tco .pick-card:focus-visible,
+  .nixxen-tco .switch:focus-visible,
+  .nixxen-tco input:focus-visible{outline:2px solid var(--green);outline-offset:2px;}
+
+  @media (prefers-reduced-motion: reduce){
+    .nixxen-tco *{transition:none !important;}
+  }
+  @media (max-width:520px){
+    .nixxen-tco{padding:20px 12px;}
+    .nixxen-tco .card-panel{padding:22px;}
+    .nixxen-tco .result-headline .big{font-size:32px;}
+  }
+</style>
+<style>html,body{margin:0;padding:0;background:#f5f7f9;}</style>
+</head>
+<body>
+<div class="nixxen-tco">
+<div class="wrap">
+
+  <div class="progress">
+    <div class="progress-seg" id="seg1"></div>
+    <div class="progress-seg" id="seg2"></div>
+    <div class="progress-seg" id="seg3"></div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div class="card-panel" id="step1">
+    <div class="step-label">Step 1 / 3</div>
+    <div class="step-title">Country and use</div>
+    <div class="step1-grid">
+      <div>
+        <label class="field-label">Where do you drive?</label>
+        <div class="grid-cards countries" id="landCards"></div>
+      </div>
+      <div>
+        <label class="field-label">Which profile suits you best?</label>
+        <div class="grid-cards scenarios" id="scenarioCards"></div>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="toStep2" disabled>Next</button>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="card-panel" id="step2" style="display:none;">
+    <div class="step-label">Step 2 / 3</div>
+    <div class="step-title">Refine your situation</div>
+    <div class="step2-grid">
+      <div class="col-inputs">
+        <div class="field-row">
+          <div class="range-top">
+            <label class="field-label">Annual distance</label>
+            <span class="range-value" id="kmValue">10,000 km</span>
+          </div>
+          <input type="range" id="kmSlider" min="5000" max="80000" step="1000" value="10000">
+          <div class="field-hint">Pre-filled from your selected use. Adjust if needed.</div>
+        </div>
+
+        <div class="advanced-toggle" id="advToggle"><span class="arrow">&#9656;</span> Adjust advanced assumptions (optional)</div>
+        <div class="advanced-body" id="advBody">
+          <div class="field-row">
+            <div class="range-top"><label class="field-label">Diesel price (€/L)</label><span class="range-value" id="dieselValue"></span></div>
+            <input type="range" id="dieselSlider" min="1.20" max="2.80" step="0.05" value="2.25">
+          </div>
+          <div class="field-row">
+            <div class="range-top"><label class="field-label">Charging price (€/kWh)</label><span class="range-value" id="stroomValue"></span></div>
+            <input type="range" id="stroomSlider" min="0.10" max="0.50" step="0.01" value="0.27">
+          </div>
+        </div>
+      </div>
+
+      <div class="col-toggles">
+        <div class="toggle-row">
+          <div class="toggle-text">
+            <div class="t1">Camper conversion needed?</div>
+            <div class="t2">Only relevant for recreational or camper use</div>
+          </div>
+          <div class="switch" id="toggleCamper" tabindex="0" role="switch"><div class="knob"></div></div>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-text">
+            <div class="t1">Do you drive in low-emission zones?</div>
+            <div class="t2">Access fees or exemptions for diesel in restricted city zones</div>
+          </div>
+          <div class="switch" id="toggleZE" tabindex="0" role="switch"><div class="knob"></div></div>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-text">
+            <div class="t1">Business use (VAT registered)?</div>
+            <div class="t2">Enables VAT reclaim, depreciation and company-car tax benefits</div>
+          </div>
+          <div class="switch" id="toggleZakelijk" tabindex="0" role="switch"><div class="knob"></div></div>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-text">
+            <div class="t1">Solar tracker roof</div>
+            <div class="t2">+€2,500. Around 10,000 extra electric km per year in urban use</div>
+          </div>
+          <div class="switch" id="toggleSolar" tabindex="0" role="switch"><div class="knob"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row" style="margin-top:26px;">
+      <button class="btn btn-ghost" id="backTo1">Back</button>
+      <button class="btn btn-primary" id="toStep3">Calculate my saving</button>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="card-panel" id="step3" style="display:none;">
+    <div class="step-label">Result</div>
+    <div class="step-title">Your indicative TCO advantage</div>
+
+    <div class="result-headline">
+      <div class="eyebrow">Saving over 5 years (range)</div>
+      <div class="big" id="bigSaving">€0 – €0</div>
+      <div class="sub2" id="midSaving">average €0 over 5 years, about €0 per month</div>
+    </div>
+
+    <div class="gauge-wrap">
+      <div class="gauge-track">
+        <div class="gauge-fill" id="gaugeFill" style="width:0%"></div>
+        <div class="gauge-marker" id="gaugeMarker" style="left:0%"></div>
+      </div>
+      <div class="gauge-labels"><span id="gLow">€0</span><span id="gMid" style="color:var(--green-ink);">average</span><span id="gHigh">€0</span></div>
+    </div>
+
+    <div class="compare-bars">
+      <div class="cbar-row">
+        <div class="cbar-top"><span class="name">Average diesel van, 5-year TCO</span><span class="val" id="dieselTotal">€0</span></div>
+        <div class="cbar-track"><div class="cbar-fill diesel" id="dieselBar" style="width:100%"></div></div>
+      </div>
+      <div class="cbar-row">
+        <div class="cbar-top"><span class="name">NIXXEN hybrid AWD, 5-year TCO <span class="smart-tag" id="smartTag">Smart choice</span></span><span class="val" id="hybrideTotal">€0</span></div>
+        <div class="cbar-track"><div class="cbar-fill hybride" id="hybrideBar" style="width:0%"></div></div>
+      </div>
+      <p style="font-size:11.5px;color:var(--text-muted);margin:2px 0 0;">Compared against a market-average diesel van in the same class.</p>
+    </div>
+
+    <div class="report" id="reportBox">
+      <h3 style="font-family:'Roboto',sans-serif;font-weight:700;font-size:16px;margin:26px 0 4px;">Full calculation breakdown</h3>
+      <p style="font-size:12px;color:var(--text-muted);margin:0 0 10px;">Average scenario, 5 years, all amounts indicative</p>
+      <table class="breakdown" id="breakdownTable"></table>
+    </div>
+
+    <div class="btn-row" style="margin-top:26px;">
+      <button class="btn btn-ghost" id="backTo2">Back</button>
+    </div>
+  </div>
+
+  <p class="footnote">
+    This is an indicative calculation based on the NIXXEN TCO model (v5). Actual savings depend on current diesel prices,
+    ETS2 rates (from 2028), local incentives and individual lease terms. No rights can be derived from this calculation.
+  </p>
+
+</div>
+</div>
+
+<script>
+(function(){
+  function initNixxenTCO(){
+    var ROOT = document.querySelector('.nixxen-tco');
+    if(!ROOT || ROOT.getAttribute('data-tco-init')) return;
+    if(!document.getElementById('landCards')) return;
+    ROOT.setAttribute('data-tco-init','1');
+
+    const NIXXEN_CONVERSIE = 34000;
+    const SOLARTRACKER = 2500;
+    const DIESEL_VERBRUIK = 10;
+    const HYBRIDE_VERBRUIK = 6.5;
+    const ONDERHOUD_BESPARING = 0.25;
+
+    const LANDEN = {
+      NL: {naam:'Netherlands', dieselPrijs:2.25, stroomPrijs:0.27, elecKwh:8, basisbus:32000, camperinbouw:35000, bpm:15000, financiering:1500, restwaardeDiesel:18000, restwaardeHybride:31000, beurt:650, bandenRemmen:350, secTanken:1300, secGarage:210, secEnergiepakket:4000, ere:850, emissieVoordeel:2000, comfort:2500, thg:0, btwAftrek:7665, degressief:0, bijtelling:0, ets2Rate:0.15, zeZone:2500},
+      DE: {naam:'Germany', dieselPrijs:2.10, stroomPrijs:0.32, elecKwh:9, basisbus:32000, camperinbouw:35000, bpm:0, financiering:1500, restwaardeDiesel:16000, restwaardeHybride:28000, beurt:700, bandenRemmen:380, secTanken:1300, secGarage:210, secEnergiepakket:4000, ere:0, emissieVoordeel:2000, comfort:2500, thg:250, btwAftrek:6935, degressief:8213, bijtelling:12726, ets2Rate:0.15, zeZone:0},
+      PL: {naam:'Poland', dieselPrijs:1.55, stroomPrijs:0.22, elecKwh:9, basisbus:30000, camperinbouw:30000, bpm:0, financiering:1200, restwaardeDiesel:12000, restwaardeHybride:26000, beurt:600, bandenRemmen:280, secTanken:900, secGarage:150, secEnergiepakket:3000, ere:0, emissieVoordeel:1000, comfort:1500, thg:0, btwAftrek:8395, degressief:0, bijtelling:0, ets2Rate:0.10, zeZone:0}
+    };
+
+    const SCENARIOS = {
+      camper:    {naam:'Camper / recreational', km:10000, ze:false, camper:true,  zakelijk:false},
+      groen:     {naam:'Landscaping', km:20000, ze:true,  camper:false, zakelijk:true},
+      aannemer:  {naam:'Contractor', km:35000, ze:true,  camper:false, zakelijk:true},
+      logistiek: {naam:'Logistics', km:50000, ze:true,  camper:false, zakelijk:true},
+      zakelijk:  {naam:'Business lease', km:40000, ze:false, camper:false, zakelijk:true}
+    };
+
+    let state = {land:null, scenario:null, km:10000, camper:false, ze:false, zakelijk:false, solar:false, dieselPrijs:null, stroomPrijs:null};
+
+    function fmtEUR(n){ return '€' + Math.round(n).toLocaleString('en-GB'); }
+    function fmtKM(n){ return n.toLocaleString('en-GB') + ' km'; }
+
+    function renderCards(){
+      const lc = document.getElementById('landCards');
+      lc.innerHTML = Object.entries(LANDEN).map(([k,v])=>
+        `<div class="pick-card" data-land="${k}" tabindex="0"><span class="code">${k}</span><span class="lbl">${v.naam}</span></div>`
+      ).join('');
+      const sc = document.getElementById('scenarioCards');
+      sc.innerHTML = Object.entries(SCENARIOS).map(([k,v])=>
+        `<div class="pick-card" data-scenario="${k}" tabindex="0"><span class="lbl">${v.naam}</span><span class="sub">${v.km.toLocaleString('en-GB')} km/yr</span></div>`
+      ).join('');
+
+      document.querySelectorAll('[data-land]').forEach(el=>{
+        const pick = ()=>{
+          document.querySelectorAll('[data-land]').forEach(x=>x.classList.remove('selected'));
+          el.classList.add('selected');
+          state.land = el.dataset.land;
+          checkStep1();
+        };
+        el.addEventListener('click', pick);
+        el.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();pick();} });
+      });
+      document.querySelectorAll('[data-scenario]').forEach(el=>{
+        const pick = ()=>{
+          document.querySelectorAll('[data-scenario]').forEach(x=>x.classList.remove('selected'));
+          el.classList.add('selected');
+          state.scenario = el.dataset.scenario;
+          const s = SCENARIOS[state.scenario];
+          state.km = s.km; state.camper = s.camper; state.ze = s.ze; state.zakelijk = s.zakelijk;
+          checkStep1();
+        };
+        el.addEventListener('click', pick);
+        el.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();pick();} });
+      });
+    }
+    function checkStep1(){
+      document.getElementById('toStep2').disabled = !(state.land && state.scenario);
+    }
+
+    function setSwitch(el, val){ el.classList.toggle('on', val); el.setAttribute('aria-checked', val); }
+    function wireSwitch(id, key){
+      const el = document.getElementById(id);
+      const toggle = ()=>{ state[key] = !state[key]; setSwitch(el, state[key]); };
+      el.addEventListener('click', toggle);
+      el.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle();} });
+    }
+    wireSwitch('toggleCamper','camper');
+    wireSwitch('toggleZE','ze');
+    wireSwitch('toggleZakelijk','zakelijk');
+    wireSwitch('toggleSolar','solar');
+
+    document.getElementById('advToggle').addEventListener('click', (e)=>{
+      e.currentTarget.classList.toggle('open');
+      document.getElementById('advBody').classList.toggle('open');
+    });
+
+    document.getElementById('kmSlider').addEventListener('input', (e)=>{
+      state.km = parseInt(e.target.value);
+      document.getElementById('kmValue').textContent = fmtKM(state.km);
+    });
+    document.getElementById('dieselSlider').addEventListener('input', (e)=>{
+      state.dieselPrijs = parseFloat(e.target.value);
+      document.getElementById('dieselValue').textContent = '€' + state.dieselPrijs.toFixed(2);
+    });
+    document.getElementById('stroomSlider').addEventListener('input', (e)=>{
+      state.stroomPrijs = parseFloat(e.target.value);
+      document.getElementById('stroomValue').textContent = '€' + state.stroomPrijs.toFixed(2);
+    });
+
+    renderCards();
+
+    document.getElementById('toStep2').addEventListener('click', ()=>{
+      document.getElementById('step1').style.display='none';
+      document.getElementById('step2').style.display='block';
+      document.getElementById('seg1').classList.add('done');
+      document.getElementById('seg2').classList.add('active');
+
+      const d = LANDEN[state.land];
+      document.getElementById('kmSlider').value = state.km;
+      document.getElementById('kmValue').textContent = fmtKM(state.km);
+      setSwitch(document.getElementById('toggleCamper'), state.camper);
+      setSwitch(document.getElementById('toggleZE'), state.ze);
+      setSwitch(document.getElementById('toggleZakelijk'), state.zakelijk);
+      setSwitch(document.getElementById('toggleSolar'), state.solar);
+      document.getElementById('dieselSlider').value = d.dieselPrijs;
+      document.getElementById('dieselValue').textContent = '€' + d.dieselPrijs.toFixed(2);
+      document.getElementById('stroomSlider').value = d.stroomPrijs;
+      document.getElementById('stroomValue').textContent = '€' + d.stroomPrijs.toFixed(2);
+      state.dieselPrijs = d.dieselPrijs;
+      state.stroomPrijs = d.stroomPrijs;
+
+      document.getElementById('toggleCamper').parentElement.style.display = (state.scenario==='camper') ? 'flex' : 'none';
+    });
+    
+    document.getElementById('backTo1').addEventListener('click', ()=>{
+      document.getElementById('step2').style.display='none';
+      document.getElementById('step1').style.display='block';
+      document.getElementById('seg2').classList.remove('active');
+    });
+    document.getElementById('backTo2').addEventListener('click', ()=>{
+      document.getElementById('step3').style.display='none';
+      document.getElementById('step2').style.display='block';
+      document.getElementById('seg3').classList.remove('active');
+    });
+
+    function calc(factors){
+      const d = LANDEN[state.land];
+      const dieselPrijs = state.dieselPrijs * factors.diesel;
+      const km = state.km;
+      const camperKost = state.camper ? d.camperinbouw : 0;
+
+      const invDiesel  = d.basisbus + camperKost + d.bpm;
+      const invHybride = d.basisbus + camperKost + NIXXEN_CONVERSIE + (state.solar ? SOLARTRACKER : 0) + d.financiering;
+
+      const energieDiesel  = (km*5/100*DIESEL_VERBRUIK) * dieselPrijs;
+      const energieHybride = (km*5/100*HYBRIDE_VERBRUIK) * dieselPrijs + (km*5/100*d.elecKwh*state.stroomPrijs);
+
+      const ets2Rate = d.ets2Rate * factors.ets2;
+      const ets2Diesel  = (km/100*DIESEL_VERBRUIK*3) * ets2Rate;
+      const ets2Hybride = (km/100*HYBRIDE_VERBRUIK*3) * ets2Rate;
+
+      const onderhoudDiesel  = (d.beurt + d.bandenRemmen) * 5;
+      const onderhoudHybride = onderhoudDiesel * (1 - ONDERHOUD_BESPARING);
+
+      const zezoneKost = state.ze ? d.zeZone * 5 : 0;
+
+      const restDiesel  = d.restwaardeDiesel;
+      const restHybride = d.restwaardeHybride * factors.residual;
+
+      const secundairHybride = d.secTanken + d.secGarage + d.secEnergiepakket + d.emissieVoordeel + d.comfort + (state.land==='NL' ? d.ere*5 : 0);
+      const fiscaalHybride = (d.thg*5) + (state.zakelijk ? (d.btwAftrek + d.degressief + d.bijtelling) : 0);
+
+      const TCO_diesel  = invDiesel + energieDiesel + ets2Diesel + onderhoudDiesel + zezoneKost - restDiesel;
+      const TCO_hybride = invHybride + energieHybride + ets2Hybride + onderhoudHybride - restHybride - secundairHybride - fiscaalHybride;
+
+      return {
+        TCO_diesel, TCO_hybride, verschil: TCO_diesel - TCO_hybride,
+        breakdown: {invDiesel, invHybride, energieDiesel, energieHybride, ets2Diesel, ets2Hybride,
+          onderhoudDiesel, onderhoudHybride, zezoneKost, restDiesel, restHybride, secundairHybride, fiscaalHybride}
+      };
+    }
+
+    document.getElementById('toStep3').addEventListener('click', ()=>{
+      document.getElementById('step2').style.display='none';
+      document.getElementById('step3').style.display='block';
+      document.getElementById('seg2').classList.add('done');
+      document.getElementById('seg3').classList.add('active');
+
+      const low  = calc({diesel:0.88, ets2:0.5, residual:0.92});
+      const mid  = calc({diesel:1.0,  ets2:1.0, residual:1.0});
+      const high = calc({diesel:1.15, ets2:1.5, residual:1.05});
+
+      const vals = [low.verschil, mid.verschil, high.verschil].sort((a,b)=>a-b);
+      const vLow = vals[0], vMid = mid.verschil, vHigh = vals[2];
+
+      document.getElementById('bigSaving').textContent = `${fmtEUR(vLow)} – ${fmtEUR(vHigh)}`;
+      document.getElementById('midSaving').textContent = `average ${fmtEUR(vMid)} over 5 years, about ${fmtEUR(vMid/60)} per month`;
+
+      const range = vHigh - vLow || 1;
+      const midPct = ((vMid - vLow)/range)*100;
+      document.getElementById('gaugeFill').style.width = '100%';
+      document.getElementById('gaugeMarker').style.left = midPct + '%';
+      document.getElementById('gLow').textContent = fmtEUR(vLow);
+      document.getElementById('gHigh').textContent = fmtEUR(vHigh);
+
+      const maxTCO = Math.max(mid.TCO_diesel, mid.TCO_hybride);
+      document.getElementById('dieselTotal').textContent = fmtEUR(mid.TCO_diesel);
+      document.getElementById('hybrideTotal').textContent = fmtEUR(mid.TCO_hybride);
+      document.getElementById('dieselBar').style.width = (mid.TCO_diesel/maxTCO*100) + '%';
+      document.getElementById('hybrideBar').style.width = (mid.TCO_hybride/maxTCO*100) + '%';
+      document.getElementById('smartTag').style.display = (mid.TCO_hybride < mid.TCO_diesel) ? 'inline-block' : 'none';
+
+      const b = mid.breakdown;
+      const rows = [
+        ['Investment (extra cost of hybrid conversion)', -((b.invHybride - b.invDiesel))],
+        ['Fuel and energy (5 years)', -(b.energieHybride - b.energieDiesel)],
+        ['ETS2 CO₂ levy (years 3 to 5)', -(b.ets2Hybride - b.ets2Diesel)],
+        ['Maintenance (5 years)', -(b.onderhoudHybride - b.onderhoudDiesel)],
+        ['Low-emission zone access avoided', b.zezoneKost],
+        ['Residual value, added value after 5 years', b.restHybride - b.restDiesel],
+        ['Secondary benefits (time, comfort, CO₂ certificates)', b.secundairHybride],
+        ['Tax benefits (country-specific' + (state.zakelijk ? '' : ', CO₂ certificate only, no business use') + ')', b.fiscaalHybride],
+      ];
+      let html = '<tr><th>Component</th><th style="text-align:right;">Effect on TCO advantage</th></tr>';
+      rows.forEach(r=>{
+        const cls = r[1] >= 0 ? 'pos' : 'neg';
+        const sign = r[1] >= 0 ? '+' : '';
+        html += `<tr><td>${r[0]}</td><td class="num ${cls}">${sign}${fmtEUR(r[1])}</td></tr>`;
+      });
+      html += `<tr class="total"><td>Total NIXXEN TCO advantage (average scenario)</td><td class="num pos">${fmtEUR(mid.verschil)}</td></tr>`;
+      document.getElementById('breakdownTable').innerHTML = html;
+      document.getElementById('reportBox').classList.add('open');
+    });
+  }
+  
+  // Initialize
+  if(document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initNixxenTCO);
+  } else {
+    initNixxenTCO();
+  }
+})();
+</script>
+</body>
+</html>
