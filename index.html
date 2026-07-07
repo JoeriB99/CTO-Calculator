@@ -195,6 +195,14 @@
   .nixxen-tco .switch:focus-visible,
   .nixxen-tco input:focus-visible{outline:2px solid var(--green);outline-offset:2px;}
 
+  /* INPUT STYLING VOOR FORMULIER */
+  .nixxen-tco .form-group { margin-bottom: 20px; text-align: left; }
+  .nixxen-tco .form-control {
+    width: 100%; padding: 14px; border-radius: 10px; border: 1px solid var(--border);
+    font-size: 15px; background: var(--surface-2); color: var(--text); transition: border-color 0.2s;
+  }
+  .nixxen-tco .form-control:focus { border-color: var(--green); outline: none; background: var(--surface); }
+
   @media (prefers-reduced-motion: reduce){
     .nixxen-tco *{transition:none !important;}
   }
@@ -294,8 +302,37 @@
     </div>
     <div class="btn-row" style="margin-top:26px;">
       <button class="btn btn-ghost" id="backTo1">Back</button>
-      <button class="btn btn-primary" id="toStep3">Calculate my saving</button>
+      <button class="btn btn-primary" id="toGate">Calculate my saving</button>
     </div>
+  </div>
+
+  <!-- STEP 2.5: HET SLOTJE (FORMULIER) -->
+  <div class="card-panel" id="stepGate" style="display:none;">
+    <div class="step-label">Unlock Results</div>
+    <div class="step-title">Enter your details to view your TCO calculation</div>
+    
+    <form id="leadForm" action="https://formsubmit.co/ajax/boelhouwerjoeri@gmail.com" method="POST">
+      <!-- Onzichtbare velden voor de dataoverdracht -->
+      <input type="hidden" name="Berekende_Besparing" id="mailSaving">
+      <input type="hidden" name="Gekozen_Land" id="mailCountry">
+      <input type="hidden" name="Bestuurders_Profiel" id="mailProfile">
+      <input type="hidden" name="Jaarlijkse_Afstand" id="mailKm">
+      
+      <!-- Zichtbare velden voor de bezoeker -->
+      <div class="form-group">
+        <label class="field-label">Your Name</label>
+        <input type="text" name="Naam" class="form-control" placeholder="John Doe" required>
+      </div>
+      <div class="form-group">
+        <label class="field-label">Your Email Address</label>
+        <input type="email" name="Email" class="form-control" placeholder="john@company.com" required>
+      </div>
+      
+      <div class="btn-row" style="margin-top:26px;">
+        <button type="button" class="btn btn-ghost" id="backTo2FromGate">Back</button>
+        <button type="submit" class="btn btn-primary" id="submitLeadBtn">View TCO Results</button>
+      </div>
+    </form>
   </div>
 
   <!-- STEP 3 -->
@@ -333,10 +370,6 @@
       <h3 style="font-family:'Roboto',sans-serif;font-weight:700;font-size:16px;margin:26px 0 4px;">Full calculation breakdown</h3>
       <p style="font-size:12px;color:var(--text-muted);margin:0 0 10px;">Average scenario, 5 years, all amounts indicative</p>
       <table class="breakdown" id="breakdownTable"></table>
-    </div>
-
-    <div class="btn-row" style="margin-top:26px;">
-      <button class="btn btn-ghost" id="backTo2">Back</button>
     </div>
   </div>
 
@@ -478,10 +511,12 @@
       document.getElementById('step1').style.display='block';
       document.getElementById('seg2').classList.remove('active');
     });
-    document.getElementById('backTo2').addEventListener('click', ()=>{
-      document.getElementById('step3').style.display='none';
+
+    document.getElementById('backTo2FromGate').addEventListener('click', ()=>{
+      document.getElementById('stepGate').style.display='none';
       document.getElementById('step2').style.display='block';
-      document.getElementById('seg3').classList.remove('active');
+      document.getElementById('seg2').classList.remove('done');
+      document.getElementById('seg2').classList.add('active');
     });
 
     function calc(factors){
@@ -521,45 +556,52 @@
       };
     }
 
-    // DATA DOORGEVEN AAN SQUARESPACE FORMULIER
-    function sendDataToSquarespace(midSavingText, countryName, profileName, annualKm) {
-      if (window.parent && window.parent.document) {
-        setTimeout(() => {
-          const pDoc = window.parent.document;
-          
-          // Zoek de invoervelden in het Squarespace-formulier op basis van hun label-tekst
-          const labels = pDoc.querySelectorAll('.form-wrapper label .title, .form-wrapper .field-list .title');
-          labels.forEach(label => {
-            const labelText = label.textContent.toLowerCase();
-            const formFieldContainer = label.closest('.form-item');
-            if (!formFieldContainer) return;
-            const input = formFieldContainer.querySelector('input[type="text"], textarea');
-            if (!input) return;
-
-            if (labelText.includes('saving') || labelText.includes('besparing')) {
-              input.value = midSavingText;
-              input.dispatchEvent(new Event('input', { bubbles: true }));
-            } else if (labelText.includes('country') || labelText.includes('land')) {
-              input.value = countryName;
-              input.dispatchEvent(new Event('input', { bubbles: true }));
-            } else if (labelText.includes('profile') || labelText.includes('profiel')) {
-              input.value = profileName;
-              input.dispatchEvent(new Event('input', { bubbles: true }));
-            } else if (labelText.includes('km') || labelText.includes('afstand')) {
-              input.value = annualKm + ' km/yr';
-              input.dispatchEvent(new Event('input', { bubbles: true }));
-            }
-          });
-        }, 500);
-      }
-    }
-
-    document.getElementById('toStep3').addEventListener('click', ()=>{
+    // NAAR HET EMAL-SLOTJE GAAN EN DATA REEDSKLAAR ZETTEN
+    document.getElementById('toGate').addEventListener('click', ()=>{
       document.getElementById('step2').style.display='none';
-      document.getElementById('step3').style.display='block';
+      document.getElementById('stepGate').style.display='block';
       document.getElementById('seg2').classList.add('done');
-      document.getElementById('seg3').classList.add('active');
+      
+      const mid = calc({diesel:1.0, ets2:1.0, residual:1.0});
+      
+      // Vul de onzichtbare formuliervelden alvast in
+      document.getElementById('mailSaving').value = fmtEUR(mid.verschil);
+      document.getElementById('mailCountry').value = LANDEN[state.land].naam;
+      document.getElementById('mailProfile').value = SCENARIOS[state.scenario].naam;
+      document.getElementById('mailKm').value = fmtKM(state.km);
+    });
 
+    // VERZENDEN EN RESULTATEN TONEN
+    document.getElementById('leadForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const btn = document.getElementById('submitLeadBtn');
+      btn.disabled = true;
+      btn.textContent = 'Unlocking...';
+
+      const formData = new FormData(this);
+      
+      fetch(this.action, {
+        method: 'POST',
+        body: formData,
+        headers: { 'Accept': 'application/json' }
+      })
+      .then(() => {
+        // Formulier succesvol verzonden! Toon direct de resultaten.
+        document.getElementById('stepGate').style.display = 'none';
+        document.getElementById('step3').style.display = 'block';
+        document.getElementById('seg3').classList.add('active');
+        renderStep3();
+      })
+      .catch(() => {
+        // Fail-safe: Zelfs als internet hapert, laat de resultaten zien
+        document.getElementById('stepGate').style.display = 'none';
+        document.getElementById('step3').style.display = 'block';
+        document.getElementById('seg3').classList.add('active');
+        renderStep3();
+      });
+    });
+
+    function renderStep3() {
       const low  = calc({diesel:0.88, ets2:0.5, residual:0.92});
       const mid  = calc({diesel:1.0,  ets2:1.0, residual:1.0});
       const high = calc({diesel:1.15, ets2:1.5, residual:1.05});
@@ -604,15 +646,7 @@
       html += `<tr class="total"><td>Total NIXXEN TCO advantage (average scenario)</td><td class="num pos">${fmtEUR(mid.verschil)}</td></tr>`;
       document.getElementById('breakdownTable').innerHTML = html;
       document.getElementById('reportBox').classList.add('open');
-
-      // VUUR DE DATA-OVERDRACHT UIT
-      sendDataToSquarespace(
-        fmtEUR(vMid),
-        LANDEN[state.land].naam,
-        SCENARIOS[state.scenario].naam,
-        state.km
-      );
-    });
+    }
   }
   
   if(document.readyState === 'loading') {
